@@ -15,4 +15,4 @@ A collection of **Python Foreign Data Wrappers (FDWs)** for PostgreSQL using **M
 - Dynamic python Foreign Data Wrappers for PostgreSQL
 - Supports `SELECT`, `INSERT`, `UPDATE`, `DELETE`
 - Generic REST API integration with authentication & pagination
-- Supports JSONB, TIMESTAMP And other data type parsing
+- Supports `JSONB`, `TIMESTAMP` And other data type parsing
