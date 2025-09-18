@@ -16,3 +16,15 @@ A collection of **Python Foreign Data Wrappers (FDWs)** for PostgreSQL using **M
 - Supports `SELECT`, `INSERT`, `UPDATE`, `DELETE`
 - Generic REST API integration with authentication & pagination
 - Supports `JSONB`, `TIMESTAMP` And other data type parsing
+
+---
+
+## Clone the repository
+
+Open a terminal and run:
+
+```bash
+cd ~
+git clone https://github.com/mitayan0/multicorn_fdw.git
+
+sudo cp -r ~/multicorn_fdw /usr/local/lib/python3.10/dist-packages/
