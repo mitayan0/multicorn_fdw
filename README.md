@@ -19,16 +19,3 @@ A collection of **Python Foreign Data Wrappers (FDWs)** for PostgreSQL using **M
 - Modular, extensible structure for future FDWs
 
 ---
-
-## Folder Structure
-
-multicorn_fdw/
-├── fdws/
-│ ├── servicenow_fdw/
-│ │ ├── init.py
-│ │ └── fdw.py 
-│ └── procg_fdw/
-│ ├── init.py
-│ └── fdw.py 
-├── SETUP.md # Installation instructions
-└── README.md
