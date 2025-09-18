@@ -6,13 +6,13 @@
 A collection of **Python Foreign Data Wrappers (FDWs)** for PostgreSQL using **Multicorn2**.  
 
 - **ServiceNowFDW** – Connect to ServiceNow Table API with full CRUD support.  
-- **ApiFdw** – Generic REST API FDW with pagination, token authentication, and CRUD operations.
+- **ApiFdw** – Generic REST API FDW with pagination, token authentication, and CRUD operations for our flask REST APIs.
 
 ---
 
 ## Features
 
-- Dynamic Foreign Data Wrappers for PostgreSQL
+- Dynamic python Foreign Data Wrappers for PostgreSQL
 - Supports `SELECT`, `INSERT`, `UPDATE`, `DELETE`
 - Generic REST API integration with authentication & pagination
-- Modular, extensible structure for future FDWs
+- Supports JSONB, TIMESTAMP And other data type parsing
