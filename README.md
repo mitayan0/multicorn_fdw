@@ -5,8 +5,8 @@
 
 A collection of **Python Foreign Data Wrappers (FDWs)** for PostgreSQL using **Multicorn2**.  
 
-- **ServiceNowFDW** – Connect to ServiceNow Table API with full CRUD support.  
-- **ApiFdw** – Generic REST API FDW with pagination, token authentication, and CRUD operations for our flask REST APIs.
+- **servicenow_fdw** – Connect to ServiceNow Table API with full CRUD support.  
+- **procg_fdw** – Generic REST API FDW with pagination, token authentication, and CRUD operations for our flask REST APIs.
 
 ---
 
