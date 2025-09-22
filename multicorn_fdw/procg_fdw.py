@@ -1,4 +1,4 @@
-#procg_fdw/fdw.py
+#procg_fdw.py
 
 import json
 import logging
