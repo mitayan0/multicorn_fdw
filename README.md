@@ -20,7 +20,7 @@ A collection of **Python Foreign Data Wrappers (FDWs)** for PostgreSQL using **M
 
 ---
 
-## Clone the repository
+## Installation
 
 Open a terminal and run:
 
