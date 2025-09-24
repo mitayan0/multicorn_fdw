@@ -23,7 +23,7 @@ OPTIONS (
     pagination_style 'path'
 );
 
----
+ ---
 
 ## Supports CRUD operations:
 

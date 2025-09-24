@@ -1,4 +1,7 @@
-from requests.auth import HTTPBasicAuth
-
-def basic_auth_headers(username, password):
-    return {"Authorization": HTTPBasicAuth(username, password)}
+def get_basic_auth(username, password):
+    """
+    Simple helper to return a tuple suitable for requests auth.
+    """
+    if username and password:
+        return (username, password)
+    return None

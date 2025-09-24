@@ -54,6 +54,7 @@ multicorn_fdw/
 ├── __init__.py
 └── setup.py
 
+---
 ## Uninstall
 
 ```bash
