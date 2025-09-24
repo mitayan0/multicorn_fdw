@@ -1,7 +1,7 @@
 # multicorn_fdw/__init__.py
 
 from .servicenow.fdw import ServiceNowFDW
-from .procg.fdw import ApiFdw
+from .procg.fdw import ProcgFdw
 
-__all__ = ["ServiceNowFDW", "ApiFdw"]
+__all__ = ["ServiceNowFDW", "ProcgFdw"]
 

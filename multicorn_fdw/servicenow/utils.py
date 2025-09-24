@@ -2,7 +2,8 @@ import json
 import decimal
 from dateutil import parser as dateutil_parser
 
-def _ensure_json(val):
+
+def ensure_json(val):
     """Coerce raw values into JSON-friendly objects."""
     if val is None:
         return None
@@ -13,14 +14,16 @@ def _ensure_json(val):
             return {"value": val}
     return val
 
-def _cast_value(col, val, col_type=None):
+
+def cast_value(col, val, col_type=None):
     """Cast raw value into Python object matching the column type."""
     if val is None or val == "":
         return None
+
     t = (col_type or "").lower() if col_type else ""
     try:
         if "json" in t:
-            return json.dumps(_ensure_json(val))
+            return json.dumps(ensure_json(val))
         if "bool" in t:
             return str(val).lower() in ("true", "t", "yes", "1")
         if any(x in t for x in ("int", "bigint", "smallint")):
@@ -39,13 +42,11 @@ def _cast_value(col, val, col_type=None):
     except Exception:
         return val
 
-def cast_row(data, columns):
-    """
-    Map API response to FDW columns, using the original _map_row logic
-    """
+
+def map_row(data, columns):
+    """Map raw API data dict into a row compatible with FDW columns."""
     row = {}
     for col in columns:
         val = data.get(col) if isinstance(data, dict) else None
-        col_type = getattr(columns.get(col), "type_name", None)
-        row[col] = _cast_value(col, val, col_type)
+        row[col] = cast_value(col, val, getattr(columns.get(col), "type_name", None))
     return row

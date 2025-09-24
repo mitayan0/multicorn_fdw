@@ -1,26 +1,32 @@
-import logging
 from multicorn import ForeignDataWrapper
 from multicorn.utils import log_to_postgres
+from .api_client import RestApiClient
+from .utils import normalize_items, unwrap_object, map_row, build_request
 
-from .auth import Auth
-from .request import do_request, fetch
-from .mapping import map_row, normalize_items, unwrap_object
-
-class ApiFdw(ForeignDataWrapper):
-    """Fully dynamic REST API FDW supporting PK, CRUD, pagination, token auth."""
+class ProcgFdw(ForeignDataWrapper):
+    """
+    Fully dynamic REST API FDW supporting optional PK, full CRUD,
+    exact-match filters only, pagination, token authentication.
+    """
 
     def __init__(self, options, columns):
         super().__init__(options, columns)
         self.columns = columns
         self.url = options["url"]
+        self.username = options.get("username")
+        self.password = options.get("password")
+        self.login_url = options.get("login_url", "http://129.146.123.215:5000/login")
+
         self.primary_key = options.get("primary_key")
         if self.primary_key and self.primary_key not in columns:
             raise ValueError("primary_key must exist in columns")
 
+        # Option: PK as query parameter
         self.pk_as_query_param = (
             options.get("pk_as_query_param", "false").lower() == "true"
         )
 
+        # Pagination
         page_opt = options.get("page")
         limit_opt = options.get("limit")
         self.paginated = page_opt is not None and limit_opt is not None
@@ -32,12 +38,15 @@ class ApiFdw(ForeignDataWrapper):
                 options.get("only_first_page", "false").lower() == "true"
             )
 
-        self._auth = Auth(
-            username=options.get("username"),
-            password=options.get("password"),
-            login_url="http://129.146.123.215:5000/login"
+        self._rowid_column = self.primary_key
+
+        # API client
+        self.client = RestApiClient(
+            base_url=self.url,
+            username=self.username,
+            password=self.password,
+            login_url=self.login_url,
         )
-        self._rowid_column = options.get("primary_key")
 
     @property
     def rowid_column(self):
@@ -45,22 +54,22 @@ class ApiFdw(ForeignDataWrapper):
 
     # ------------------ READ ------------------
     def execute(self, quals, columns, sortkeys=None):
-        headers = self._auth.headers()
-        # Wrap login for request module
-        headers["Authorization"] = lambda: f"Bearer {self._auth.login()}"
-        filters = {q.field_name: q.value for q in quals if q.field_name in self.columns and q.operator == "="}
+        filters = {}
+        for q in quals:
+            if q.field_name in self.columns and q.operator == "=":
+                filters[q.field_name] = q.value
 
         if self.paginated:
             page = self.start_page
             while True:
                 if self.pagination_style == "path":
-                    url = f"{self.url}/{page}/{self.limit}"
-                    data = fetch("GET", url, headers=headers, params=filters)
+                    url, params = build_request(self.url, None, False, None, page, self.limit)
+                    data = self.client.fetch(url, params={**filters, **params})
                 elif self.pagination_style == "params":
                     params = {"page": page, "limit": self.limit, **filters}
-                    data = fetch("GET", self.url, headers=headers, params=params)
+                    data = self.client.fetch(self.url, params=params)
                 else:
-                    data = fetch("GET", self.url, headers=headers, params=filters)
+                    data = self.client.fetch(self.url, params=filters)
 
                 items = normalize_items(data)
                 if not items:
@@ -71,89 +80,50 @@ class ApiFdw(ForeignDataWrapper):
                     break
                 page += 1
         else:
-            data = fetch("GET", self.url, headers=headers, params=filters)
+            data = self.client.fetch(self.url, params=filters)
             items = normalize_items(data)
             for item in items:
                 yield map_row(item, self.columns)
 
     # ------------------ INSERT ------------------
     def insert(self, new_values):
-        headers = self._auth.headers()
-        headers["Authorization"] = lambda: f"Bearer {self._auth.login()}"
-        log_to_postgres(f"Inserting: {new_values}", level=logging.INFO)
-        resp = do_request("POST", self.url, headers=headers, json=new_values)
+        log_to_postgres(f"Inserting: {new_values}", level=10)
+        resp = self.client.request("POST", self.url, json=new_values)
         try:
             data = unwrap_object(resp.json())
             return map_row(data, self.columns)
-        except Exception:
+        except Exception as e:
+            log_to_postgres(f"Error parsing JSON response after INSERT: {e}", level=20)
             return new_values
 
     # ------------------ UPDATE ------------------
     def update(self, rowid, new_values):
-        headers = self._auth.headers()
-        headers["Authorization"] = lambda: f"Bearer {self._auth.login()}"
-        if self.pk_as_query_param:
-            url = self.url
-            params = {self.primary_key: rowid}
-            resp = do_request("PUT", url, headers=headers, json=new_values, params=params)
-        else:
-            url = f"{self.url}/{rowid}"
-            resp = do_request("PUT", url, headers=headers, json=new_values)
+        url, params = build_request(self.url, rowid, self.pk_as_query_param, self.primary_key)
+        log_to_postgres(f"Updating ID '{rowid}' at {url} with values: {new_values}", level=10)
+        resp = self.client.request("PUT", url, json=new_values, params=params or None)
         try:
             data = unwrap_object(resp.json())
             return map_row(data, self.columns)
-        except Exception:
+        except Exception as e:
+            log_to_postgres(f"Error parsing JSON response after UPDATE: {e}", level=20)
             return new_values
 
     # ------------------ DELETE ------------------
     def delete(self, rowid):
-        headers = self._auth.headers()
-        headers["Authorization"] = lambda: f"Bearer {self._auth.login()}"
-
-        # 1) Try DELETE with path param
+        # Path/query param handled via build_request
+        url, params = build_request(self.url, rowid, self.pk_as_query_param, self.primary_key)
         try:
-            url = f"{self.url}/{rowid}"
-            log_to_postgres(f"DELETE path param -> {url}", level=logging.INFO)
-            do_request("DELETE", url, headers=headers)
+            log_to_postgres(f"DELETE -> {url} with params={params}", level=10)
+            self.client.request("DELETE", url, params=params or None)
             return None
         except Exception as e:
-            # Only handle HTTPError with specific codes
-            if hasattr(e, "response") and e.response is not None and e.response.status_code not in (404, 400, 500):
-                raise
-            log_to_postgres(
-                f"Path param DELETE failed (status {getattr(e.response, 'status_code', 'N/A')}), trying next style.",
-                level=logging.INFO,
-            )
+            log_to_postgres(f"DELETE failed: {e}, trying JSON body.", level=20)
 
-        # 2) Try query param if PK as query parameter
-        if self.pk_as_query_param:
-            try:
-                params = {self.primary_key: rowid}
-                log_to_postgres(
-                    f"DELETE query param -> {self.url} with {params}", level=logging.INFO
-                )
-                do_request("DELETE", self.url, headers=headers, params=params)
-                return None
-            except Exception as e:
-                if hasattr(e, "response") and e.response is not None and e.response.status_code not in (404, 400, 500):
-                    raise
-                log_to_postgres(
-                    f"Query param DELETE failed (status {getattr(e.response, 'status_code', 'N/A')}), trying JSON body.",
-                    level=logging.INFO,
-                )
-
-        # 3) Try JSON body
+        # Fallback: JSON body style
         try:
             payload = {"control_environment_ids": [rowid]}
-            log_to_postgres(
-                f"DELETE JSON body -> {self.url} with {payload}", level=logging.INFO
-            )
-            do_request("DELETE", self.url, headers=headers, json=payload)
-            return None
+            log_to_postgres(f"DELETE JSON body -> {self.url} with {payload}", level=10)
+            self.client.request("DELETE", self.url, json=payload)
         except Exception as e:
-            if hasattr(e, "response") and e.response is not None and e.response.status_code == 404:
-                log_to_postgres(
-                    f"Row {rowid} not found (DELETE JSON body)", level=logging.INFO
-                )
-                return None
-            raise
+            log_to_postgres(f"DELETE JSON body failed: {e}", level=20)
+        return None
