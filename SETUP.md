@@ -12,6 +12,7 @@ Open a terminal and run:
 cd ~
 git clone https://github.com/mitayan0/multicorn_fdw.git
 
-sudo cp -r ~/multicorn_fdw /usr/local/lib/python3.10/dist-packages/
+cd multicorn_fdw/
 
+Sudo pip install .
 

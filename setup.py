@@ -8,6 +8,9 @@ setup(
     license='Postgresql',
     packages=find_packages(),
     install_requires=[
-        'multicorn'
-    ]
+        'multicorn',
+        'requests',
+        'python-dateutil'
+    ],
+    python_requires=">=3.10"
 )
