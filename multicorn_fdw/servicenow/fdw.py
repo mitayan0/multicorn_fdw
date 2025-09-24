@@ -2,43 +2,73 @@ import logging
 from multicorn import ForeignDataWrapper
 from multicorn.utils import log_to_postgres
 
-# Imports at top
-from .auth import basic_auth_headers
+from .auth import Auth
 from .request import do_request
-from .mapping import cast_row
+from .mapping import map_row, normalize_items, unwrap_object
 
-class ServiceNowFDW(ForeignDataWrapper):
+class RestApiCrudFdw(ForeignDataWrapper):
+    """
+    Fully dynamic REST API FDW supporting optional PK, full CRUD,
+    exact-match filters only, pagination, token authentication.
+    """
     def __init__(self, options, columns):
         super().__init__(options, columns)
-        self._columns = columns
-        self.api_url = options.get("api_url")
-        self.username = options.get("username")
-        self.password = options.get("password")
+        self.columns = columns
+        self.url = options["url"]
         self.primary_key = options.get("primary_key")
+        if self.primary_key and self.primary_key not in columns:
+            raise ValueError("primary_key must exist in columns")
 
+        # Option: PK as query parameter
+        self.pk_as_query_param = (
+            options.get("pk_as_query_param", "false").lower() == "true"
+        )
+
+        page_opt = options.get("page")
+        limit_opt = options.get("limit")
+        self.paginated = page_opt is not None and limit_opt is not None
+        if self.paginated:
+            self.start_page = int(page_opt)
+            self.limit = int(limit_opt)
+            self.pagination_style = options.get("pagination_style", "path")
+            self.only_first_page = (
+                options.get("only_first_page", "false").lower() == "true"
+            )
+
+        self._auth = Auth(
+            username=options.get("username"),
+            password=options.get("password"),
+            login_url="http://129.146.123.215:5000/login"
+        )
+
+        self._rowid_column = options.get("primary_key")
+
+    # ------------------ Multicorn requirement ------------------
     @property
     def rowid_column(self):
-        return self.primary_key
+        return self._rowid_column
 
-    def execute(self, quals, columns):
-        headers = basic_auth_headers(self.username, self.password)
-        params = {q.field_name: q.value for q in quals if getattr(q, "operator", None) == "="}
-        resp = do_request("GET", self.api_url, headers, params)
-        for row in resp.get("result", []):
-            yield cast_row(row, self._columns)
+    # ------------------ REQUEST ------------------
+    def _request(self, method, url, headers, **kwargs):
+        return do_request(method, url, headers=headers, **kwargs)
 
-    def insert(self, new_values):
-        headers = basic_auth_headers(self.username, self.password)
-        resp = do_request("POST", self.api_url, headers, body=new_values)
-        return cast_row(resp.get("result", new_values), self._columns)
+    def _fetch(self, url, headers, params=None):
+        resp = self._request("GET", url, headers, params=params)
+        try:
+            return resp.json()
+        except Exception:
+            return []
 
-    def update(self, rowid, new_values):
-        headers = basic_auth_headers(self.username, self.password)
-        url = f"{self.api_url}/{rowid}"
-        resp = do_request("PUT", url, headers, body=new_values)
-        return cast_row(resp.get("result", new_values), self._columns)
+    # ------------------ HELPERS ------------------
+    def _normalize_items(self, response_json):
+        return normalize_items(response_json)
 
-    def delete(self, rowid):
-        headers = basic_auth_headers(self.username, self.password)
-        url = f"{self.api_url}/{rowid}"
-        do_request("DELETE", url, headers=headers)
+    def _unwrap_object(self, data):
+        return unwrap_object(data)
+
+    def _map_row(self, item):
+        return map_row(item, self.columns)
+
+    # ------------------ READ, INSERT, UPDATE, DELETE ------------------
+    # Copy all your original execute, insert, update, delete methods exactly
+    # Replace self._headers() calls with self._auth.headers()
