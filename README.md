@@ -32,3 +32,32 @@ git clone https://github.com/mitayan0/multicorn_fdw.git
 cd multicorn_fdw/
 
 Sudo pip install .
+
+---
+
+## File Structure
+
+multicorn_fdw/
+│
+├── procg/            # Procg API FDW
+│   ├── fdw.py
+│   ├── auth.py
+│   ├── request.py
+│   └── mapping.py
+│
+├── servicenow/       # ServiceNow FDW
+│   ├── fdw.py
+│   ├── auth.py
+│   ├── request.py
+│   └── mapping.py
+│
+├── __init__.py
+└── setup.py
+
+## Uninstall
+
+```bash
+sudo python3.10 -m pip uninstall multicorn-fdw -y
+
+sudo rm -rf /usr/local/lib/python3.10/dist-packages/multicorn_fdw
+sudo rm -rf /usr/local/lib/python3.10/dist-packages/multicorn_fdw-*.dist-info
