@@ -1,7 +1,6 @@
 # multicorn_fdw
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
-
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A collection of **Python Foreign Data Wrappers (FDWs)** for PostgreSQL using **Multicorn2**.  
@@ -33,6 +32,9 @@ cd multicorn_fdw/
 
 Sudo pip install .
 
+
+```
+
 ---
 
 ## File Structure
@@ -51,10 +53,11 @@ multicorn_fdw/
 │   ├── crud_handlers.py
 │   └── utils.py
 │
-├── __init__.py
+├── _init_.py
 └── setup.py
 
 ---
+
 ## Uninstall
 
 ```bash
@@ -63,4 +66,4 @@ sudo python3.10 -m pip uninstall multicorn-fdw -y
 sudo rm -rf /usr/local/lib/python3.10/dist-packages/multicorn_fdw
 sudo rm -rf /usr/local/lib/python3.10/dist-packages/multicorn_fdw-*.dist-info
 
-
+```
