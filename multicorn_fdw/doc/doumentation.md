@@ -41,8 +41,10 @@ UPDATE procg_tasks SET status = 'closed' WHERE id = '124';
 -- DELETE
 DELETE FROM procg_tasks WHERE id = '124';
 
+```
 
 ---
+
 ## ServiceNow FDW
 
 ```sql
@@ -64,7 +66,6 @@ OPTIONS (
     primary_key 'sys_id'
 );
 
+```
 
 ---
-
-
