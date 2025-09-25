@@ -41,15 +41,15 @@ multicorn_fdw/
 │
 ├── procg/            # Procg API FDW
 │   ├── fdw.py
-│   ├── auth.py
-│   ├── request.py
-│   └── mapping.py
+│   ├── api_client.py
+│   ├── crud_handlers.py
+│   └── utils.py
 │
 ├── servicenow/       # ServiceNow FDW
 │   ├── fdw.py
-│   ├── auth.py
-│   ├── request.py
-│   └── mapping.py
+│   ├── api_client.py
+│   ├── crud_handlers.py
+│   └── utils.py
 │
 ├── __init__.py
 └── setup.py
@@ -62,3 +62,5 @@ sudo python3.10 -m pip uninstall multicorn-fdw -y
 
 sudo rm -rf /usr/local/lib/python3.10/dist-packages/multicorn_fdw
 sudo rm -rf /usr/local/lib/python3.10/dist-packages/multicorn_fdw-*.dist-info
+
+
