@@ -39,22 +39,28 @@ Sudo pip install .
 
 ## File Structure
 
+```bash
+
 multicorn_fdw/
 │
 ├── procg/            # Procg API FDW
+│   ├── __init__.py           
 │   ├── fdw.py
 │   ├── api_client.py
 │   ├── crud_handlers.py
 │   └── utils.py
 │
 ├── servicenow/       # ServiceNow FDW
+│   ├── __init__.py
 │   ├── fdw.py
 │   ├── api_client.py
 │   ├── crud_handlers.py
 │   └── utils.py
 │
-├── _init_.py
+├── __init__.py
 └── setup.py
+
+```
 
 ---
 
