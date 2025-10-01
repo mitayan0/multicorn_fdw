@@ -3,23 +3,26 @@ import json
 
 
 def normalize_items(response_json):
-    """Extract list of items from typical REST API responses."""
+    """Extract list of items - finds any array in the response."""
     if isinstance(response_json, list):
         return response_json
     if isinstance(response_json, dict):
-        for key in ("items", "results", "data"):
-            if key in response_json and isinstance(response_json[key], list):
-                return response_json[key]
+        # Find the first key that contains a list
+        for key, value in response_json.items():
+            if isinstance(value, list):
+                return value
+        # No array found, treat as single item
         return [response_json]
     return [response_json]
 
 
 def unwrap_object(data):
-    """Unwrap API payload when object is nested inside a key like data/item/result."""
+    """Unwrap API payload - finds any nested object."""
     if isinstance(data, dict):
-        for key in ("data", "item", "result"):
-            if key in data and isinstance(data[key], dict):
-                return data[key]
+        # Find the first key that contains a non-empty dict
+        for key, value in data.items():
+            if isinstance(value, dict) and value:
+                return value
     return data
 
 

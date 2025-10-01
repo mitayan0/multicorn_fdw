@@ -5,7 +5,7 @@ from .utils import normalize_items, unwrap_object, map_row, build_request
 
 def execute(self, quals, columns, sortkeys=None):
     filters = {}
-    for q in quals:
+    for q in quals:         # quals is used for where clause
         if q.field_name in self.columns and q.operator == "=":
             filters[q.field_name] = q.value
 
@@ -27,7 +27,7 @@ def execute(self, quals, columns, sortkeys=None):
             for item in items:
                 yield map_row(item, self.columns)
             if len(items) < self.limit or self.only_first_page:
-                break
+                break  #need improvement
             page += 1
     else:
         data = self.client.fetch(self.url, params=filters)
@@ -70,7 +70,8 @@ def delete(self, rowid):
 
     # Fallback JSON body
     try:
-        payload = {"control_environment_ids": [rowid]}
+        delete_payload = getattr(self, "delete_paylod", "control_environment_ids")
+        payload = {delete_payload: [rowid]}
         log_to_postgres(f"DELETE JSON body -> {self.url} with {payload}", level=10)
         self.client.request("DELETE", self.url, json=payload)
     except Exception as e:

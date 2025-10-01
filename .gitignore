@@ -8,3 +8,9 @@ venv/
 .env 
 
 .vscode/
+
+.pytest_cache/
+
+/tests
+/tests/*
+pytest.ini
