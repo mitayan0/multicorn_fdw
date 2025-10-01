@@ -30,7 +30,9 @@ git clone https://github.com/mitayan0/multicorn_fdw.git
 
 cd multicorn_fdw/
 
-Sudo pip install .
+sudo pip install .
+
+sudo systemctl restart postgresql@16-main
 
 
 ```
