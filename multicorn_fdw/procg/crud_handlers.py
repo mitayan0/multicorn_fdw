@@ -1,6 +1,7 @@
 #multicorn_fdw/procg/crud_handlers.py
 from multicorn.utils import log_to_postgres
 from .utils import normalize_items, unwrap_object, map_row, build_request
+import logging
 
 
 def execute(self, quals, columns, sortkeys=None):
@@ -37,44 +38,44 @@ def execute(self, quals, columns, sortkeys=None):
 
 
 def insert(self, new_values):
-    log_to_postgres(f"Inserting: {new_values}", level=10)
+    log_to_postgres(f"Inserting: {new_values}", level=logging.DEBUG)
     resp = self.client.request("POST", self.url, json=new_values)
     try:
         data = unwrap_object(resp.json())
         return map_row(data, self.columns)
     except Exception as e:
-        log_to_postgres(f"Error parsing JSON response after INSERT: {e}", level=20)
+        log_to_postgres(f"Error parsing JSON response after INSERT: {e}", level=logging.INFO)
         return new_values
 
 
 def update(self, rowid, new_values):
     url, params = build_request(self.url, rowid, self.pk_as_query_param, self.primary_key)
-    log_to_postgres(f"Updating ID '{rowid}' at {url} with values: {new_values}", level=10)
+    log_to_postgres(f"Updating ID '{rowid}' at {url} with values: {new_values}", level=logging.DEBUG)
     resp = self.client.request("PUT", url, json=new_values, params=params or None)
     try:
         data = unwrap_object(resp.json())
         return map_row(data, self.columns)
     except Exception as e:
-        log_to_postgres(f"Error parsing JSON response after UPDATE: {e}", level=20)
+        log_to_postgres(f"Error parsing JSON response after UPDATE: {e}", level=logging.INFO)
         return new_values
 
 
 def delete(self, rowid):
     url, params = build_request(self.url, rowid, self.pk_as_query_param, self.primary_key)
     try:
-        log_to_postgres(f"DELETE -> {url} with params={params}", level=10)
+        log_to_postgres(f"DELETE -> {url} with params={params}", level=logging.DEBUG)
         self.client.request("DELETE", url, params=params or None)
         return None
     except Exception as e:
-        log_to_postgres(f"DELETE failed: {e}, trying JSON body.", level=20)
+        log_to_postgres(f"DELETE failed: {e}, trying JSON body.", level=logging.INFO)
 
     # Fallback JSON body
     try:
         delete_payload = getattr(self, "delete_body_key")
         payload = {delete_payload: [rowid]}
-        log_to_postgres(f"DELETE JSON body -> {self.url} with {payload}", level=10)
+        log_to_postgres(f"DELETE JSON body -> {self.url} with {payload}", level=logging.DEBUG)
         self.client.request("DELETE", self.url, json=payload)
     except Exception as e:
-        log_to_postgres(f"DELETE JSON body failed: {e}", level=20)
+        log_to_postgres(f"DELETE JSON body failed: {e}", level=logging.INFO)
     return None
     
