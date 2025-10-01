@@ -70,7 +70,7 @@ def delete(self, rowid):
 
     # Fallback JSON body
     try:
-        delete_payload = getattr(self, "delete_paylod", "control_environment_ids")
+        delete_payload = getattr(self, "delete_body_key", "control_environment_ids")
         payload = {delete_payload: [rowid]}
         log_to_postgres(f"DELETE JSON body -> {self.url} with {payload}", level=10)
         self.client.request("DELETE", self.url, json=payload)
