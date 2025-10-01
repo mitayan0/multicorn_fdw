@@ -36,7 +36,7 @@ class ProcgFdw(ForeignDataWrapper):
         self._rowid_column = self.primary_key
 
         # Allow configuring delete JSON body key; default keeps current behavior.
-        self.delete_body_key = options.get("delete_body_key", "control_environment_ids")
+        self.delete_body_key = options.get("delete_body_key")
 
         # API client
         self.client = RestApiClient(

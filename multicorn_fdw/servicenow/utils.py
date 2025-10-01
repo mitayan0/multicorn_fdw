@@ -51,3 +51,49 @@ def map_row(data, columns):
         val = data.get(col) if isinstance(data, dict) else None
         row[col] = cast_value(col, val, getattr(columns.get(col), "type_name", None))
     return row
+
+
+def _safe_json(resp):
+    if not resp or not getattr(resp, "content", None):
+        return None
+    try:
+        return resp.json()
+    except Exception:
+        return None
+
+
+def result_list(resp, default=None):
+    """Return a list of rows from any JSON shape."""
+    if default is None:
+        default = []
+    payload = _safe_json(resp)
+    if payload is None:
+        return default
+
+    if isinstance(payload, list):
+        return payload
+
+    if isinstance(payload, dict):
+        for v in payload.values():
+            if isinstance(v, list):
+                return v
+        return [payload]
+
+    return default
+
+
+def result_obj(resp, default=None):
+    """Return a single row (dict-like) from any JSON shape."""
+    if default is None:
+        default = {}
+    payload = _safe_json(resp)
+    if payload is None:
+        return default
+
+    if isinstance(payload, dict):
+        return payload
+
+    if isinstance(payload, list):
+        return payload[0] if payload else default
+
+    return default
