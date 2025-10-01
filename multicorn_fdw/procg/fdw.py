@@ -21,7 +21,7 @@ class ProcgFdw(ForeignDataWrapper):
             options.get("pk_as_query_param", "false").lower() == "true"
         )
 
-        # Pagination
+                # Pagination
         page_opt = options.get("page")
         limit_opt = options.get("limit")
         self.paginated = page_opt is not None and limit_opt is not None
@@ -34,6 +34,9 @@ class ProcgFdw(ForeignDataWrapper):
             )
 
         self._rowid_column = self.primary_key
+
+        # Allow configuring delete JSON body key; default keeps current behavior.
+        self.delete_paylod = options.get("delete_payload", "control_environment_ids")
 
         # API client
         self.client = RestApiClient(

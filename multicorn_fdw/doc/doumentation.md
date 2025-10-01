@@ -27,6 +27,50 @@ OPTIONS (
 
  ---
 
+## Testing
+
+This project uses `pytest` to validate both the `procg` and `servicenow` FDWs.
+
+Prerequisites:
+
+- Python 3.10+
+- A virtual environment activated for this project
+
+Install test dependencies:
+
+```bash
+pip install -U pytest python-dateutil
+```
+
+Run tests from the project root:
+
+```bash
+pytest -q
+```
+
+Optional coverage:
+
+```bash
+pip install pytest-cov
+pytest --cov=multicorn_fdw -q
+```
+
+Notes:
+
+- Tests mock all HTTP calls; no network is required.
+- If you see `ImportError: No module named multicorn` or similar, ensure you are using the project's virtual environment and that `multicorn` is installed in that environment.
+- On Windows PowerShell, activate the venv and run tests:
+
+```powershell
+# from project root
+./venv/Scripts/Activate.ps1
+python -V
+python -c "import sys,site; print(sys.executable); print(site.getsitepackages())"
+pytest -q
+```
+
+ ---
+
 ## Supports CRUD operations
 
 ```sql
